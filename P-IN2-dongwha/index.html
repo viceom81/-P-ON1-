@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>우리들의 동화 - 마음 읽고 반응하기</title>
+<style>
+:root{--bg:#fdf7ec;--ink:#2b2b2b;--joy:#f6b93b;--sad:#4a90d9;--ang:#e5534b;--sur:#9b59b6;--ok:#27ae60}
+*{box-sizing:border-box}body{margin:0;font-family:"Malgun Gothic","Noto Sans KR",sans-serif;background:var(--bg);color:var(--ink);user-select:none}
+header{display:flex;align-items:center;gap:10px;padding:10px 18px;background:#fff;border-bottom:3px solid #e8dcc6}
+header h1{font-size:26px;margin:0;flex:1}header button{font-size:20px;padding:8px 16px}
+button{font-family:inherit;border:3px solid #333;border-radius:18px;background:#fff;cursor:pointer;font-weight:bold}
+button:disabled{opacity:.35;cursor:default}
+.screen{display:none;padding:18px;max-width:1300px;margin:0 auto}.screen.on{display:block}
+.menu{display:flex;gap:24px;justify-content:center;margin-top:60px;flex-wrap:wrap}
+.menu button{width:300px;height:220px;font-size:34px}.menu button span{display:block;font-size:80px}
+.stage{background:#fff;border:4px solid #e8dcc6;border-radius:26px;min-height:330px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.scene{font-size:110px;letter-spacing:10px}.face{font-size:150px;transition:transform .3s}
+.face.go{animation:pop 1.2s ease}@keyframes pop{0%{transform:scale(.3)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+.nar{font-size:30px;margin:10px 20px;text-align:center;min-height:44px}
+.wait{height:26px;width:80%;background:#eee;border-radius:13px;overflow:hidden;margin:12px auto}
+.wait div{height:100%;width:0;background:#f39c12;transition:width linear}
+.waitlab{text-align:center;font-size:28px;font-weight:bold;color:#c0392b;min-height:38px}
+.q{font-size:30px;font-weight:bold;text-align:center;margin:14px 0 8px}
+.btns{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.btns button{font-size:30px;padding:16px 6px;min-height:120px}.btns button span{display:block;font-size:56px}
+.b-joy{border-color:var(--joy)}.b-sad{border-color:var(--sad)}.b-ang{border-color:var(--ang)}.b-sur{border-color:var(--sur)}
+.fb{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:60px;font-weight:bold;background:rgba(255,255,255,.92);flex-direction:column}
+.fb.on{display:flex}.stars{font-size:34px;text-align:right}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.cards button{font-size:24px;padding:12px;min-height:150px}.cards button span{display:block;font-size:60px}
+.role{font-size:30px;text-align:center;font-weight:bold;margin:6px}
+table{border-collapse:collapse;margin:20px auto;font-size:26px}td,th{border:2px solid #999;padding:10px 22px;text-align:center}
+.small{font-size:20px}
+</style></head><body>
+<header><h1>🎭 우리들의 동화 · 마음 읽고 반응하기</h1><button onclick="go('home')">처음으로</button></header>
+
+<section id="home" class="screen on"><div class="menu">
+<button onclick="startSolo()"><span>🎲</span>장면 연습</button>
+<button onclick="startPair()"><span>👫</span>짝 연습</button>
+<button onclick="showRec()"><span>⭐</span>기록 보기</button></div></section>
+
+<section id="solo" class="screen">
+<div class="stars" id="stars"></div>
+<div class="stage"><div class="scene" id="sc"></div><div class="face" id="fc"></div><div class="nar" id="nar"></div>
+<div class="fb" id="fb"></div></div>
+<div class="wait"><div id="bar"></div></div><div class="waitlab" id="wl"></div>
+<div class="q" id="q"></div><div class="btns" id="bt"></div></section>
+
+<section id="pair" class="screen">
+<div class="role" id="prole"></div>
+<div id="pickWrap"><div class="cards" id="cards"></div></div>
+<div id="showWrap" style="display:none">
+<div class="stage"><div class="scene" id="psc"></div><div class="nar" id="pnar"></div><div class="fb" id="pfb"></div></div>
+<div class="q" id="pq"></div><div class="btns" id="pbt"></div></div>
+<div style="text-align:center;margin-top:14px"><button class="small" style="padding:10px 20px" onclick="swapRole()">🔄 역할 바꾸기</button></div></section>
+
+<section id="rec" class="screen"><div class="q">⭐ 우리 반 연습 기록 (처음에 바로 맞힌 횟수 / 연습 횟수)</div>
+<table id="rt"></table><div style="text-align:center"><button class="small" style="padding:10px 20px" onclick="resetRec()">기록 지우기</button></div></section>
+
+<script>
+const EM={joy:{n:'기쁨',f:'😄',r:'기쁘구나, 축하해.',c:'b-joy'},sad:{n:'슬픔',f:'😢',r:'슬프구나, 괜찮아.',c:'b-sad'},ang:{n:'화남',f:'😠',r:'화났구나, 진정해.',c:'b-ang'},sur:{n:'놀람',f:'😲',r:'놀랐구나, 괜찮아.',c:'b-sur'}};
+const SC=[
+{e:'sur',s:'☂️🚶💥',t:'우산을 쓰고 걷는데, 뒤에서 “빵!” 소리가 났어요.',c:'우산'},
+{e:'sur',s:'🎈📌💥',t:'풍선을 불고 있는데, 풍선이 “펑!” 터졌어요.',c:'풍선'},
+{e:'sad',s:'🦺⛰️🌧️',t:'산에 가려고 조끼를 입었는데, 비가 와서 못 간대요.',c:'조끼'},
+{e:'sad',s:'🍦⬇️💧',t:'아이스크림을 먹으려는데, 바닥에 떨어뜨렸어요.',c:'아이스크림'},
+{e:'ang',s:'🚗✋🧒',t:'내 자동차 장난감을 친구가 허락 없이 만졌어요.',c:'자동차'},
+{e:'ang',s:'🧍🧍🏃',t:'줄을 서 있는데, 친구가 앞에 끼어들었어요.',c:'줄 서기'},
+{e:'joy',s:'📋🏆⭐',t:'칭찬 게시판에서 내 이름을 찾았어요. 칭찬왕이에요!',c:'칭찬 게시판'},
+{e:'joy',s:'🎁🎂🎉',t:'생일에 갖고 싶던 선물을 받았어요.',c:'선물'}];
+const $=id=>document.getElementById(id);
+function say(t,cb){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='ko-KR';u.rate=0.9;
+ const v=speechSynthesis.getVoices().find(v=>v.lang.startsWith('ko'));if(v)u.voice=v;let d=false;const end=()=>{if(!d){d=true;cb&&cb()}};
+ u.onend=end;speechSynthesis.speak(u);setTimeout(end,Math.max(2500,t.length*260));}catch(e){cb&&setTimeout(cb,t.length*220)}}
+function beep(ok){try{const a=new AudioContext(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);
+ o.frequency.value=ok?880:220;g.gain.value=.15;o.start();o.stop(a.currentTime+(ok?.25:.4))}catch(e){}}
+function go(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==id));speechSynthesis&&speechSynthesis.cancel()}
+// 기록
+let R={};try{R=JSON.parse(localStorage.getItem('dongwha_rec')||'{}')}catch(e){}
+function save(){try{localStorage.setItem('dongwha_rec',JSON.stringify(R))}catch(e){}}
+function mark(e,first){R[e]=R[e]||{t:0,f:0};R[e].t++;if(first)R[e].f++;save()}
+function showRec(){go('rec');$('rt').innerHTML='<tr><th>분위기</th><th>바로 맞힘</th><th>연습</th></tr>'+Object.keys(EM).map(k=>`<tr><td>${EM[k].f} ${EM[k].n}</td><td>${(R[k]||{}).f||0}</td><td>${(R[k]||{}).t||0}</td></tr>`).join('')}
+function resetRec(){R={};save();showRec()}
+// 장면 연습
+let cur,step,first,stars=0,last=-1,bag=[];
+function nextScene(){if(!bag.length)bag=SC.map((_,i)=>i).sort(()=>Math.random()-.5);let i=bag.pop();if(i===last&&bag.length){bag.unshift(i);i=bag.pop()}last=i;return SC[i]}
+function startSolo(){go('solo');stars=0;$('stars').textContent='';play()}
+function lock(on){document.querySelectorAll('#bt button').forEach(b=>b.disabled=on)}
+function play(){cur=nextScene();step=1;first=true;$('fb').classList.remove('on');$('sc').textContent=cur.s;$('fc').textContent='';$('nar').textContent=cur.t;
+ $('q').textContent='';renderBtns('emo');lock(true);$('wl').textContent='✋ 기다려요';const bar=$('bar');bar.style.transition='none';bar.style.width='0';
+ say(cur.t,()=>{$('fc').textContent=EM[cur.e].f;$('fc').classList.remove('go');void $('fc').offsetWidth;$('fc').classList.add('go');
+  bar.style.transition='width 2s linear';bar.style.width='100%';
+  setTimeout(()=>{$('wl').textContent='';$('q').textContent='친구의 마음은 어떨까요?';lock(false);say('친구의 마음은 어떨까요?')},2000)});}
+function renderBtns(kind,tgt='bt',fn='pick'){const ks=Object.keys(EM).sort(()=>Math.random()-.5);
+ $(tgt).innerHTML=ks.map(k=>kind=='emo'?`<button class="${EM[k].c}" onclick="${fn}('${k}')"><span>${EM[k].f}</span>${EM[k].n}</button>`:`<button class="${EM[k].c}" onclick="${fn}('${k}')">${EM[k].r}</button>`).join('')}
+function fbShow(el,html,ms,cb){el.innerHTML=html;el.classList.add('on');setTimeout(()=>{el.classList.remove('on');cb&&cb()},ms)}
+function pick(k){lock(true);const ok=k==cur.e;beep(ok);
+ if(step==1){ if(ok){say(EM[k].n+'이에요. 맞아요!');fbShow($('fb'),`<div>${EM[k].f}</div>${EM[k].n} 맞아요!`,1600,()=>{step=2;$('q').textContent='어떤 말을 해 줄까요?';renderBtns('say');say('어떤 말을 해 줄까요?')})}
+  else{first=false;say('표정을 다시 볼까요?');fbShow($('fb'),'<div>👀</div>표정을 다시 봐요',1600,()=>lock(false))}}
+ else{ if(ok){mark(cur.e,first);if(first)stars++;$('stars').textContent='⭐'.repeat(stars);say(EM[k].r+' 따라 말해 봐요.');
+   fbShow($('fb'),`<div>💬</div>“${EM[k].r}”<div class="small" style="font-size:28px">따라 말해 봐요</div>`,3800,play)}
+  else{first=false;say('다시 골라 볼까요?');fbShow($('fb'),'<div>🤔</div>다시 골라 봐요',1500,()=>lock(false))}}}
+// 짝 연습
+let pr=1,pcur;
+function startPair(){go('pair');pickMode()}
+function swapRole(){pr=pr==1?2:1;pickMode()}
+function pickMode(){$('prole').textContent=`🎬 장면 친구: ${pr}번 · 💬 반응 친구: ${pr==1?2:1}번 — 장면 친구가 카드를 골라요`;
+ $('pickWrap').style.display='';$('showWrap').style.display='none';
+ $('cards').innerHTML=SC.map((s,i)=>`<button onclick="pshow(${i})"><span>${s.s}</span>${s.c}</button>`).join('')}
+function pshow(i){pcur=SC[i];$('pickWrap').style.display='none';$('showWrap').style.display='';$('pfb').classList.remove('on');
+ $('psc').textContent=pcur.s;$('pnar').textContent=pcur.t;$('pq').textContent='🎬 장면 친구: 표정과 몸짓으로 마음을 보여 주세요';$('pbt').innerHTML='';
+ say(pcur.t,()=>{$('pq').innerHTML='💬 반응 친구: 표정을 끝까지 보고, 기다렸다가 골라요';
+  setTimeout(()=>{renderBtns('say','pbt','ppick')},2500)})}
+function ppick(k){const ok=k==pcur.e;beep(ok);
+ if(ok){mark(pcur.e,true);say(EM[k].r);fbShow($('pfb'),`<div>${EM[k].f} 💬</div>“${EM[k].r}”`,3000,()=>{swapRole()})}
+ else{say('친구 표정을 다시 볼까요?');fbShow($('pfb'),'<div>👀</div>친구 표정을 다시 봐요',1600)}}
+speechSynthesis&&speechSynthesis.getVoices();
+</script></body></html>
